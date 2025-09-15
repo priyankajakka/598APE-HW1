@@ -20,7 +20,7 @@ Autonoma::Autonoma(const Camera& c): camera(c){
    listEnd = NULL;
    lightStart = NULL;
    lightEnd = NULL;
-   depth = 10;
+   depth = 8;
    skybox = BLACK;
 }
 
@@ -29,7 +29,7 @@ Autonoma::Autonoma(const Camera& c, Texture* tex): camera(c){
    listEnd = NULL;
    lightStart = NULL;
    lightEnd = NULL;
-   depth = 10;
+   depth = 8;
    skybox = tex;
 }
 

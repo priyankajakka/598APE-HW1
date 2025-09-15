@@ -32,6 +32,7 @@ unsigned char* getColor(unsigned char a, unsigned char b, unsigned char c){
      
 int W = 1000, H = 1000;
 
+// DATA is a 1D array
 unsigned char* DATA = (unsigned char*)malloc(W*H*3*sizeof(unsigned char));
 unsigned char get(int i, int j, int k){
    return DATA[3*(i+j*W)+k]; 
@@ -45,6 +46,8 @@ void set(int i, int j, unsigned char r, unsigned char g, unsigned char b){
    DATA[3*(i+j*W)+2] = b; 
 }
 
+// Calculates color at each pixel
+// DATA is RGB array of image W*H
 void refresh(Autonoma* c){
    for(int n = 0; n<H*W; ++n) 
    { 
@@ -202,6 +205,8 @@ Autonoma* createInputs(const char* inputFile) {
    Texture *background = NULL;
 
    FILE *f = NULL;
+
+   // Get camera position and tilt
    if (inputFile) {
       f = fopen(inputFile, "r");
       if (!f) {
@@ -214,12 +219,15 @@ Autonoma* createInputs(const char* inputFile) {
       }
       background = parseTexture(f, false);
    }
+
+   // If there is no background color, default to sky image
    if (!background) {
       const char* texture_path = "images/skybox.jpg";
       background = new ImageTexture(texture_path);
    }
    Autonoma* MAIN_DATA = new Autonoma(Camera(Vector(camera_x, camera_y, camera_z), yaw, pitch, roll),background);
 
+   // Parsing through the ray file to get the linked list of light sources and planes
    if (f) {
       char object_type[80];
       while (lscanf(f, "%s", object_type) != EOF) {
@@ -436,6 +444,7 @@ void setFrame(const char* animateFile, Autonoma* MAIN_DATA, int frame, int frame
    refresh(MAIN_DATA);
 }
 
+// MAIN FUNCTION
 int main(int argc, const char** argv){
 
    int frameLen = 1;
@@ -461,6 +470,7 @@ int main(int argc, const char** argv){
          i++;
          continue;
       }
+      // FRAME LEN can change here depending on if its an animated output (24 frames)
       if (streq(argv[i], "-F")) {
          if (i + 1 >= argc) {
             printf("Error -F option must be followed by an integer number of frames");
