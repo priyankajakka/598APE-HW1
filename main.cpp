@@ -52,12 +52,25 @@ void set(int i, int j, unsigned char r, unsigned char g, unsigned char b){
 
 // Calculates color at each pixel
 // DATA is RGB array of image W*H
-void refresh(Autonoma* c){
-   for(int n = 0; n<H*W; ++n) 
-   { 
-      Vector ra = c->camera.forward+((double)(n%W)/W-.5)*((c->camera.right))+(.5-(double)(n/W)/H)*((c->camera.up));
-      calcColor(&DATA[3*n], c, Ray(c->camera.focus, ra), 0);
-   }
+void refreshRange(Autonoma* c, int start, int end) {
+    for (int n = start; n < end; ++n) {
+        Vector ra = c->camera.forward+((double)(n%W)/W-.5)*((c->camera.right))+(.5-(double)(n/W)/H)*((c->camera.up));
+         calcColor(&DATA[3*n], c, Ray(c->camera.focus, ra), 0);
+    }
+}
+
+void refresh(Autonoma* c) {
+    int fourth = H * W / 4;
+
+    std::thread t1(refreshRange, c, 0, fourth);
+    std::thread t2(refreshRange, c, fourth, 2*fourth);
+    std::thread t3(refreshRange, c, 2*fourth, 3*fourth);
+    std::thread t4(refreshRange, c, 3*fourth, H*W);
+
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
 }
 
 void outputPPM(FILE* f){
@@ -547,6 +560,7 @@ int main(int argc, const char** argv){
   struct timeval start, end;
    gettimeofday(&start, NULL);
    if (frameLen == 1) {
+      setFrame(animateFile, MAIN_DATA, frame, frameLen, -1);
       snprintf(command, sizeof(command), "%s", outFile);
       if (png) {
          output(command); 
