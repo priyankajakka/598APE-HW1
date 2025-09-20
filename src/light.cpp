@@ -108,8 +108,8 @@ void Autonoma::removeLight(LightNode* s){
 void getLight(double* tColor, Autonoma* aut, Vector point, Vector norm, unsigned char flip){
    tColor[0] = tColor[1] = tColor[2] = 0.;
    LightNode *t = aut->lightStart;
+   double lightColor[3];  
    while(t!=NULL){
-      double lightColor[3];     
       lightColor[0] = t->data->color[0]/255.;
       lightColor[1] = t->data->color[1]/255.;
       lightColor[2] = t->data->color[2]/255.;
@@ -124,10 +124,10 @@ void getLight(double* tColor, Autonoma* aut, Vector point, Vector norm, unsigned
       if(!hit){
       if(flip && perc<0) perc=-perc;
         if(perc>0){
-      
-         tColor[0]+= perc*(lightColor[0]);
-         tColor[1]+= perc*(lightColor[0]);
-         tColor[2]+= perc*(lightColor[0]);
+         double percUpdate = perc*(lightColor[0]);
+         tColor[0]+= percUpdate;
+         tColor[1]+= percUpdate;
+         tColor[2]+= percUpdate;
          if(tColor[0]>1.) tColor[0] = 1.;
          if(tColor[1]>1.) tColor[1] = 1.;
          if(tColor[2]>1.) tColor[2] = 1.;

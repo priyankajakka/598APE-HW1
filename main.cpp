@@ -86,16 +86,13 @@ int streq(const char* a, const char* b) {
 
 // Similar to fscanf, except ignore empty and comment lines
 // Kept as a macro to preserve compiler warnings for mismatch input type
-#define lscanf(f, thread, ...) \
+#define lscanf(f, ...) \
 ({\
    char line[1000];\
    char* linePtr = line;\
    size_t len = sizeof(line);\
    int retval;\
    while ((retval = getline(&linePtr, &len, f)) != EOF) {\
-      if(thread != -1) {\
-         bytes_read[thread] += (size_t)retval;\
-      }\
       if (line[0] == '#') continue;\
       if (line[0] == '\n') continue;\
       if (line[0] == '\0') continue;\
@@ -105,10 +102,10 @@ int streq(const char* a, const char* b) {
    retval;\
 })
 
-Texture* parseTexture(FILE* f, int thread, bool allowNull) {
+Texture* parseTexture(FILE* f, bool allowNull) {
    char texture_type[80];
 
-   if (lscanf(f, thread, "%s", texture_type) == EOF) {
+   if (lscanf(f, "%s", texture_type) == EOF) {
       printf("Found EOF while parsing texture type\n");
       exit(1);
    }
@@ -121,7 +118,7 @@ Texture* parseTexture(FILE* f, int thread, bool allowNull) {
    if (streq(texture_type, "color")) {
       int r, g, b;
       double opacity, reflection, ambient;
-      if (lscanf(f, thread, "%d %d %d %lf %lf %lf\n", &r, &g, &b, &opacity, &reflection, &ambient) == EOF) {
+      if (lscanf(f, "%d %d %d %lf %lf %lf\n", &r, &g, &b, &opacity, &reflection, &ambient) == EOF) {
          printf("Could not read <r> <g> <b> <opacity> <reflection> <ambient>\n");
          exit(1);
       }
@@ -129,7 +126,7 @@ Texture* parseTexture(FILE* f, int thread, bool allowNull) {
    }
    if (streq(texture_type, "image")) {
       char image_file[100];
-      if (lscanf(f, thread, "%s\n", image_file) == EOF) {
+      if (lscanf(f, "%s\n", image_file) == EOF) {
          printf("Could not read <image path>\n");
          exit(1);
       }
@@ -137,7 +134,7 @@ Texture* parseTexture(FILE* f, int thread, bool allowNull) {
    }
    if (streq(texture_type, "maskedimage")) {
       char image_file[100];
-      if (lscanf(f, thread, "%s\n", image_file) == EOF) {
+      if (lscanf(f, "%s\n", image_file) == EOF) {
          printf("Could not read <image path>\n");
          exit(1);
       }
@@ -148,7 +145,7 @@ Texture* parseTexture(FILE* f, int thread, bool allowNull) {
    if (streq(texture_type, "inlineimage")) {
       int w, h;
       double opacity, reflection, ambient;
-      if (lscanf(f, thread, "%d %d %lf %lf %lf\n", &w, &h, &opacity, &reflection, &ambient) == EOF) {
+      if (lscanf(f, "%d %d %lf %lf %lf\n", &w, &h, &opacity, &reflection, &ambient) == EOF) {
          printf("Could not read <w> <h> <b> <opacity> <reflection> <ambient>\n");
          exit(1);
       }
@@ -157,7 +154,7 @@ Texture* parseTexture(FILE* f, int thread, bool allowNull) {
       for (int x=0; x<w; x++) {
          for (int y=0; y<h; y++) {
             int r, g, b;
-            if (lscanf(f, thread, "%d %d %d\n", &r, &g, &b) == EOF) {
+            if (lscanf(f, "%d %d %d\n", &r, &g, &b) == EOF) {
                printf("Could not read <r> <g> <b>\n");
                exit(1);
             }
@@ -201,182 +198,6 @@ unsigned int* getTriangles(FILE* f, int len){
    return vec;
 }
 
-void process_lines(FILE *f, std::streampos end, int id, Autonoma* MAIN_DATA) {
-   char object_type[80];
-   int total_bytes = static_cast<std::uint64_t>(static_cast<std::streamoff>(end));
-
-   while (lscanf(f, id, "%s", object_type) != EOF) {
-      if (bytes_read[id] > end) {
-         break;
-      }
-      // std::cout << "Thread " << id << ": " << object_type << std::endl;
-      if (streq(object_type, "light")) {
-         double light_x, light_y, light_z;
-         int color_r, color_g, color_b;
-         if (lscanf(f, id, "%lf %lf %lf %d %d %d\n", &light_x, &light_y, &light_z, &color_r, &color_g, &color_b) == EOF) {
-            printf("Could not read <light_x> <light_y> <light_z> <color_r> <color_g> <color_b>\n");
-            exit(1);
-         }
-         Light *light = new Light(Vector(light_x, light_y, light_z), getColor(color_r, color_g, color_b));
-         MAIN_DATA->addLight(light);
-      } else if (streq(object_type, "plane")) {
-         double plane_x, plane_y, plane_z;
-         double yaw, pitch, roll;
-         double tx, ty;
-         if (lscanf(f, id, "%lf %lf %lf %lf %lf %lf %lf %lf\n", &plane_x, &plane_y, &plane_z, &yaw, &pitch, &roll, &tx, &ty) == EOF) {
-            printf("Could not read <plane_x> <plane_y> <plane_z> <yaw> <pitch> <roll> <tx> <ty>\n");
-            exit(1);
-         }
-         Texture *texture = parseTexture(f, id, false);
-         Plane *shape = new Plane(Vector(plane_x, plane_y, plane_z), texture, yaw, pitch, roll, tx, ty);
-         MAIN_DATA->addShape(shape);
-         shape->normalMap = parseTexture(f, id, true);
-      } else if (streq(object_type, "disk")) {
-         double disk_x, disk_y, disk_z;
-         double yaw, pitch, roll;
-         double tx, ty;
-         if (lscanf(f, id, "%lf %lf %lf %lf %lf %lf %lf %lf\n", &disk_x, &disk_y, &disk_z, &yaw, &pitch, &roll, &tx, &ty) == EOF) {
-            printf("Could not read <disk_x> <disk_y> <disk_z> <yaw> <pitch> <roll> <tx> <ty>\n");
-            exit(1);
-         }
-         Texture *texture = parseTexture(f, id, false);
-         Disk* shape = new Disk(Vector(disk_x, disk_y, disk_z), texture, yaw, pitch, roll, tx, ty);
-         MAIN_DATA->addShape(shape);
-         shape->normalMap = parseTexture(f, id, true);
-      } else if (streq(object_type, "box")) {
-         double box_x, box_y, box_z;
-         double yaw, pitch, roll;
-         double tx, ty;
-         if (lscanf(f, id, "%lf %lf %lf %lf %lf %lf %lf %lf\n", &box_x, &box_y, &box_z, &yaw, &pitch, &roll, &tx, &ty) == EOF) {
-            printf("Could not read <box_x> <box_y> <box_z> <yaw> <pitch> <roll> <tx> <ty>\n");
-            exit(1);
-         }
-         Texture *texture = parseTexture(f, id, false);
-         Box* shape = new Box(Vector(box_x, box_y, box_z), texture, yaw, pitch, roll, tx, ty);
-         MAIN_DATA->addShape(shape);
-         shape->normalMap = parseTexture(f, id, true);
-      } else if (streq(object_type, "triangle")) {
-         double x1, y1, z1;
-         double x2, y2, z2;
-         double x3, y3, z3;
-         if (lscanf(f, id, "%lf %lf %lf %lf %lf %lf %lf %lf %lf\n", &x1, &y1, &z1, &x2, &y2, &z2, &x3, &y3, &z3) == EOF) {
-            printf("Could not read <x1> <y1> <z1> <x2> <y2> <z2> <x3> <y3> <z3>\n");
-            exit(1);
-         }
-         Texture *texture = parseTexture(f, id, false);
-         Triangle* shape = new Triangle(Vector(x1, y1, z1), Vector(x2, y2, z2), Vector(x3, y3, z3), texture);
-         MAIN_DATA->addShape(shape);
-         shape->normalMap = parseTexture(f, id, true);
-      } else if (streq(object_type, "sphere")) {
-         double sphere_x, sphere_y, sphere_z;
-         double yaw, pitch, roll;
-         double radius;
-         if (lscanf(f, id, "%lf %lf %lf %lf %lf %lf %lf\n", &sphere_x, &sphere_y, &sphere_z, &yaw, &pitch, &roll, &radius) == EOF) {
-            printf("Could not read <sphere_x> <sphere_y> <sphere_z> <yaw> <pitch> <roll> <radius>\n");
-            exit(1);
-         }
-         Texture *texture = parseTexture(f, id, false);
-         Sphere* shape = new Sphere(Vector(sphere_x, sphere_y, sphere_z), texture, yaw, pitch, roll, radius);
-         MAIN_DATA->addShape(shape);
-         shape->normalMap = parseTexture(f, id, true);
-      } else if (streq(object_type, "mesh")) {
-            char point_filepath[100];
-            char poly_filepath[100];
-            int num_points;
-            int num_polygons;
-            double off_x;
-            double off_y;
-            double off_z;
-         if (lscanf(f, id, "%s %d %s %d %lf %lf %lf\n", point_filepath, &num_points, poly_filepath, &num_polygons, &off_x, &off_y, &off_z) == EOF) {
-            printf("Could not read <point filepath> <num_points> <polygons filepath> <num_polygons> <off_x> <off_y> <off_z>\n");
-            exit(1);
-         }
-         Texture *texture = parseTexture(f, id, false);
-         Texture *normalMap = parseTexture(f, id, true);
-
-         FILE* vectors = fopen(point_filepath,"r"), *triangles = fopen(poly_filepath,"r");
-         if (!vectors) {
-            printf("Could not open point file %s\n", point_filepath);
-            exit(1);
-         }
-         if (!triangles) {
-            printf("Could not open triangles file %s\n", poly_filepath);
-            exit(1);
-         }
-         Vector* points = getVectors(vectors, num_points);
-         fclose(vectors);
-         unsigned int* polys = getTriangles(triangles, num_polygons);
-         fclose(triangles);
-         Vector offset(off_x, off_y, off_z); 
-         for(int i = 0; i<num_polygons; i++){
-            int pos = 3 * i;
-            Triangle* shape = new Triangle(points[polys[pos]] + offset, points[polys[pos+1]] + offset, points[polys[pos+2]] + offset, texture);
-            MAIN_DATA->addShape(shape);
-            shape->normalMap = normalMap;
-         }
-      } else {
-         printf("Unknown object type %s\n", object_type);
-         exit(1);
-      }
-   }
-}
-
-std::streampos filesize(const std::string& p){
-    std::ifstream f(p, std::ios::binary|std::ios::ate);
-    return f ? f.tellg() : std::streampos(-1);
-}
-
-std::streampos align_to_next_line(const std::string& path, std::streampos pos) {
-    std::ifstream f(path, std::ios::binary);
-    if (!f) return pos;
-
-    const std::streamoff one{1};
-
-    // 1) Move to a line boundary if we're currently in the middle of a line.
-    if (pos > std::streampos(0)) {
-        f.seekg(pos - one);
-        if (!f) {                       // if pos==0 or seek failed, reset
-            f.clear();
-            f.seekg(0);
-        } else {
-            int prev = f.get();         // char before pos
-            if (prev != '\n' && prev != '\r') {
-                // consume until end of this line (handle CRLF)
-                f.seekg(pos);
-                for (int c = f.get(); f; c = f.get()) {
-                    if (c == '\n') break;
-                    if (c == '\r') { if (f.peek() == '\n') f.get(); break; }
-                }
-            } else {
-                f.seekg(pos);           // already at a boundary
-            }
-        }
-    } else {
-        f.seekg(0);
-    }
-
-    // 2) Scan lines until we find an empty one; return the position *after* it.
-    std::string line;
-    for (;;) {
-        std::streampos pos_before = f.tellg();   // start of this line
-        if (!std::getline(f, line)) {
-            // no newline found until EOF → return file size
-            f.clear();
-            f.seekg(0, std::ios::end);
-            return f.tellg();
-        }
-        // trim trailing '\r' (CRLF files)
-        if (!line.empty() && line.back() == '\r') line.pop_back();
-
-        if (line.empty()) {
-            // Next empty line found.
-            // If you want the *start* of the empty line, return pos_before.
-            return f.tellg();            // start of the line AFTER the empty line
-        }
-        // else: keep scanning
-    }
-}
-
 Autonoma* createInputs(const char* inputFile) {
    
    double camera_x = 0;
@@ -393,59 +214,135 @@ Autonoma* createInputs(const char* inputFile) {
    // Get camera position and tilt
    if (inputFile) {
       f = fopen(inputFile, "r");
-      f2 = fopen(inputFile, "r");
-      if (!f || !f2) {
+      if (!f) {
          printf("Could not open input file %s\n", inputFile);
          exit(1);
       }
-      if (lscanf(f, 0, "%lf %lf %lf %lf %lf %lf\n", &camera_x, &camera_y, &camera_z, &yaw, &pitch, &roll) == EOF) {
+      if (lscanf(f, "%lf %lf %lf %lf %lf %lf\n", &camera_x, &camera_y, &camera_z, &yaw, &pitch, &roll) == EOF) {
          printf("Could not read <camera_x> <camera_y> <camera_z> <yaw> <pitch> <roll>\n");
          exit(1);
       }
-      background = parseTexture(f, 0, false);
+      background = parseTexture(f, false);
    }
-
-   // If there is no background color, default to sky image
    if (!background) {
       const char* texture_path = "images/skybox.jpg";
       background = new ImageTexture(texture_path);
    }
    Autonoma* MAIN_DATA = new Autonoma(Camera(Vector(camera_x, camera_y, camera_z), yaw, pitch, roll),background);
-   Autonoma* MAIN_DATA_TEMP = new Autonoma(Camera(Vector(camera_x, camera_y, camera_z), yaw, pitch, roll),background);
 
-   // FILE PARALLEL READING STUFF STARTS HERE
-   std::ifstream file(inputFile, std::ios::ate);
-   std::streampos filesize = file.tellg();
-   std::streampos mid = filesize / 2;
-   auto split = align_to_next_line(inputFile, mid);
+   if (f) {
+      char object_type[80];
+      while (lscanf(f, "%s", object_type) != EOF) {
+         if (streq(object_type, "light")) {
+            double light_x, light_y, light_z;
+            int color_r, color_g, color_b;
+            if (lscanf(f, "%lf %lf %lf %d %d %d\n", &light_x, &light_y, &light_z, &color_r, &color_g, &color_b) == EOF) {
+               printf("Could not read <light_x> <light_y> <light_z> <color_r> <color_g> <color_b>\n");
+               exit(1);
+            }
+            Light *light = new Light(Vector(light_x, light_y, light_z), getColor(color_r, color_g, color_b));
+            MAIN_DATA->addLight(light);
+         } else if (streq(object_type, "plane")) {
+            double plane_x, plane_y, plane_z;
+            double yaw, pitch, roll;
+            double tx, ty;
+            if (lscanf(f, "%lf %lf %lf %lf %lf %lf %lf %lf\n", &plane_x, &plane_y, &plane_z, &yaw, &pitch, &roll, &tx, &ty) == EOF) {
+               printf("Could not read <plane_x> <plane_y> <plane_z> <yaw> <pitch> <roll> <tx> <ty>\n");
+               exit(1);
+            }
+            Texture *texture = parseTexture(f, false);
+            Plane *shape = new Plane(Vector(plane_x, plane_y, plane_z), texture, yaw, pitch, roll, tx, ty);
+            MAIN_DATA->addShape(shape);
+            shape->normalMap = parseTexture(f, true);
+         } else if (streq(object_type, "disk")) {
+            double disk_x, disk_y, disk_z;
+            double yaw, pitch, roll;
+            double tx, ty;
+            if (lscanf(f, "%lf %lf %lf %lf %lf %lf %lf %lf\n", &disk_x, &disk_y, &disk_z, &yaw, &pitch, &roll, &tx, &ty) == EOF) {
+               printf("Could not read <disk_x> <disk_y> <disk_z> <yaw> <pitch> <roll> <tx> <ty>\n");
+               exit(1);
+            }
+            Texture *texture = parseTexture(f, false);
+            Disk* shape = new Disk(Vector(disk_x, disk_y, disk_z), texture, yaw, pitch, roll, tx, ty);
+            MAIN_DATA->addShape(shape);
+            shape->normalMap = parseTexture(f, true);
+         } else if (streq(object_type, "box")) {
+            double box_x, box_y, box_z;
+            double yaw, pitch, roll;
+            double tx, ty;
+            if (lscanf(f, "%lf %lf %lf %lf %lf %lf %lf %lf\n", &box_x, &box_y, &box_z, &yaw, &pitch, &roll, &tx, &ty) == EOF) {
+               printf("Could not read <box_x> <box_y> <box_z> <yaw> <pitch> <roll> <tx> <ty>\n");
+               exit(1);
+            }
+            Texture *texture = parseTexture(f, false);
+            Box* shape = new Box(Vector(box_x, box_y, box_z), texture, yaw, pitch, roll, tx, ty);
+            MAIN_DATA->addShape(shape);
+            shape->normalMap = parseTexture(f, true);
+         } else if (streq(object_type, "triangle")) {
+            double x1, y1, z1;
+            double x2, y2, z2;
+            double x3, y3, z3;
+            if (lscanf(f, "%lf %lf %lf %lf %lf %lf %lf %lf %lf\n", &x1, &y1, &z1, &x2, &y2, &z2, &x3, &y3, &z3) == EOF) {
+               printf("Could not read <x1> <y1> <z1> <x2> <y2> <z2> <x3> <y3> <z3>\n");
+               exit(1);
+            }
+            Texture *texture = parseTexture(f, false);
+            Triangle* shape = new Triangle(Vector(x1, y1, z1), Vector(x2, y2, z2), Vector(x3, y3, z3), texture);
+            MAIN_DATA->addShape(shape);
+            shape->normalMap = parseTexture(f, true);
+         } else if (streq(object_type, "sphere")) {
+            double sphere_x, sphere_y, sphere_z;
+            double yaw, pitch, roll;
+            double radius;
+            if (lscanf(f, "%lf %lf %lf %lf %lf %lf %lf\n", &sphere_x, &sphere_y, &sphere_z, &yaw, &pitch, &roll, &radius) == EOF) {
+               printf("Could not read <sphere_x> <sphere_y> <sphere_z> <yaw> <pitch> <roll> <radius>\n");
+               exit(1);
+            }
+            Texture *texture = parseTexture(f, false);
+            Sphere* shape = new Sphere(Vector(sphere_x, sphere_y, sphere_z), texture, yaw, pitch, roll, radius);
+            MAIN_DATA->addShape(shape);
+            shape->normalMap = parseTexture(f, true);
+         } else if (streq(object_type, "mesh")) {
+             char point_filepath[100];
+             char poly_filepath[100];
+             int num_points;
+             int num_polygons;
+             double off_x;
+             double off_y;
+             double off_z;
+            if (lscanf(f, "%s %d %s %d %lf %lf %lf\n", point_filepath, &num_points, poly_filepath, &num_polygons, &off_x, &off_y, &off_z) == EOF) {
+               printf("Could not read <point filepath> <num_points> <polygons filepath> <num_polygons> <off_x> <off_y> <off_z>\n");
+               exit(1);
+            }
+            Texture *texture = parseTexture(f, false);
+            Texture *normalMap = parseTexture(f, true);
 
-   fseek(f2, split, SEEK_CUR);
-
-   // std::cout << "filesize: " << filesize << std::endl;
-
-   std::thread t1(process_lines, f, split, 0, MAIN_DATA);
-   std::thread t2(process_lines, f2, filesize, 1, MAIN_DATA_TEMP);
-
-   t1.join();
-   t2.join();
-
-   // std::cout<< "Both threads completed" << std::endl;
-
-   if (MAIN_DATA_TEMP->listStart != nullptr) {
-      MAIN_DATA->listEnd->next = MAIN_DATA_TEMP->listStart;
-      MAIN_DATA_TEMP->listStart->prev = MAIN_DATA->listEnd;
-      MAIN_DATA->listEnd = MAIN_DATA_TEMP->listEnd;
+            FILE* vectors = fopen(point_filepath,"r"), *triangles = fopen(poly_filepath,"r");
+            if (!vectors) {
+               printf("Could not open point file %s\n", point_filepath);
+               exit(1);
+            }
+            if (!triangles) {
+               printf("Could not open triangles file %s\n", poly_filepath);
+               exit(1);
+            }
+            Vector* points = getVectors(vectors, num_points);
+            fclose(vectors);
+            unsigned int* polys = getTriangles(triangles, num_polygons);
+            fclose(triangles);
+            Vector offset(off_x, off_y, off_z); 
+            for(int i = 0; i<num_polygons; i++){
+               Triangle* shape = new Triangle(points[polys[3*i]] + offset, points[polys[3*i+1]] + offset, points[polys[3*i+2]] + offset, texture);
+               MAIN_DATA->addShape(shape);
+               shape->normalMap = normalMap;
+            }
+         } else {
+           printf("Unknown object type %s\n", object_type);
+           exit(1);
+         }
+      }
    }
-   if (MAIN_DATA_TEMP->lightStart != nullptr) {
-      MAIN_DATA->lightEnd->next = MAIN_DATA_TEMP->lightStart;
-      MAIN_DATA_TEMP->lightStart->prev = MAIN_DATA->lightEnd;
-      MAIN_DATA->lightEnd = MAIN_DATA_TEMP->lightEnd;
-   }
-   
-   // FILE PARALLEL READING STUFF ENDS HERE
 
-   // Parsing through the ray file to get the linked list of light sources and planes
-   
    return MAIN_DATA;
 }
 
@@ -471,7 +368,7 @@ void setFrame(const char* animateFile, Autonoma* MAIN_DATA, int frame, int frame
       double from;
       double to;
       FILE* f = fopen(animateFile, "r");
-      while (lscanf(f, thread, "%s %s %d %s %lf %lf", transition_type, object_type, &obj_num, field_type, &from, &to) != EOF) {
+      while (lscanf(f, "%s %s %d %s %lf %lf", transition_type, object_type, &obj_num, field_type, &from, &to) != EOF) {
          double (*func)(double, double, double);
          if (streq(transition_type, "linear")) {
             func = identity;
@@ -507,12 +404,10 @@ void setFrame(const char* animateFile, Autonoma* MAIN_DATA, int frame, int frame
          } else if (streq(object_type, "object")) {
             ShapeNode* node = MAIN_DATA->listStart;
             for (int i=0; i<obj_num; i++) {
-               if (node == MAIN_DATA->listEnd) {
+               if (node == nullptr) {
                   printf("Could not find object number %d\n", obj_num);
                   exit(1);
                }
-               if (i == obj_num)
-                  break;
                node = node->next;
             }
             Shape* shape = node->data;
@@ -651,21 +546,26 @@ int main(int argc, const char** argv){
    
   struct timeval start, end;
    gettimeofday(&start, NULL);
-   for(frame = 0; frame<frameLen; frame++) {
-      setFrame(animateFile, MAIN_DATA, frame, frameLen, -1);      
-      if (frameLen == 1) {
-         snprintf(command, sizeof(command), "%s", outFile);    
-      } else if (png) {
-         snprintf(command, sizeof(command), "%s.tmp.%07d.png", outFile, frame);
-      } else {
-         snprintf(command, sizeof(command), "%s.tmp.%07d.ppm", outFile, frame);
-      }
+   if (frameLen == 1) {
+      snprintf(command, sizeof(command), "%s", outFile);
       if (png) {
          output(command); 
       } else {
          outputPPM(command); 
-      }     
-      printf("Done Frame %7d|\n", frame);
+      }
+      printf("Done Frame %7d|\n", 0);
+   } else {
+      for(frame = 0; frame<frameLen; frame++) {
+         setFrame(animateFile, MAIN_DATA, frame, frameLen, -1);      
+         if (png) {
+            snprintf(command, sizeof(command), "%s.tmp.%07d.png", outFile, frame);
+            output(command); 
+         } else {
+            snprintf(command, sizeof(command), "%s.tmp.%07d.ppm", outFile, frame);
+            outputPPM(command); 
+         }
+         printf("Done Frame %7d|\n", frame);
+      }
    }
 
    gettimeofday(&end, NULL);
