@@ -25,6 +25,14 @@ make -j
 ```
 3. Run commands for piano, globe, sphere, and elephant!
 
+| Input                                | Command       |
+|---------------------------------------------|--------------|
+| Piano                     | ```./main.exe -i inputs/pianoroom.ray --ppm -o output/pianoroom.ppm -H 500 -W 500```   |
+| Globe                    |  ```./main.exe -i inputs/globe.ray --ppm  -a inputs/globe.animate --movie -F 24  ```   |
+| Sphere mesh          | ```./main.exe -i inputs/elephant.ray --ppm  -a inputs/elephant.animate --movie -F 24 -W 100 -H 100 -o output/sphere.mp4 ```   |
+| Elephant mesh    | ```./main.exe -i inputs/elephant.ray --ppm  -a inputs/elephant.animate --movie -F 24 -W 100 -H 100 -o output/sphere.mp4 ```    |
+
+
 To clean existing build artifacts run:
 ```bash
 make clean
