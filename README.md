@@ -1,8 +1,16 @@
 # 598APE-HW1
 
-This repository contains code for homework 1 of 598APE.
+This repository contains code for homework 1 of 598APE. 
+We implemented 3 optimizations. Each version of our code, including the original unoptimized program, is on its own branch.  
 
-In particular, this repository is an implementation of a Raytracer.
+| Optimization                                | Branch       |
+|---------------------------------------------|--------------|
+| Original (unoptimized)                      | `baseline`   |
+| Removal of sorting logic                    | `optimization1-remove-sorting`   |
+| Removal of redundant normalization          | `optimization2-redundant-normalization`   |
+| Parallelization of RGB value computation    | `main`    |
+
+1. Removal 
 
 To run the baseline code (original code without any optimizations):
 ```bash
@@ -14,10 +22,6 @@ Replace <pjakka3> with your netid in dockerrun.sh
 ./dockerrun.sh
 cd host
 make -j
-```
-Piano:
-```bash
-./main.exe -i inputs/pianoroom.ray --ppm -o output/pianoroom.ppm -H 500 -W 500
 ```
 
 To run the final optimized code:
@@ -31,10 +35,6 @@ Replace <pjakka3> with your netid in dockerrun.sh
 cd host
 make -j
 ```
-Piano:
-```bash
-./main.exe -i inputs/pianoroom.ray --ppm -o output/pianoroom.ppm -H 500 -W 500
-```
 
 To run the code after the Optimization 1 (Removal of Sorting Logic in shape.cpp)
 ```bash
@@ -47,10 +47,6 @@ Replace <pjakka3> with your netid in dockerrun.sh
 cd host
 make -j
 ```
-Piano:
-```bash
-./main.exe -i inputs/pianoroom.ray --ppm -o output/pianoroom.ppm -H 500 -W 500
-```
 
 To run the code after the Optimization 2 (Removal of Redundant Normalization Calculations in shape.cpp)
 ```bash
@@ -62,10 +58,6 @@ Replace <pjakka3> with your netid in dockerrun.sh
 ./dockerrun.sh
 cd host
 make -j
-```
-Piano:
-```bash
-./main.exe -i inputs/pianoroom.ray --ppm -o output/pianoroom.ppm -H 500 -W 500
 ```
 
 To compile the program run:
