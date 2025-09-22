@@ -4,6 +4,70 @@ This repository contains code for homework 1 of 598APE.
 
 In particular, this repository is an implementation of a Raytracer.
 
+To run the baseline code (original code without any optimizations):
+```bash
+git checkout baseline
+git pull
+```
+Replace <pjakka3> with your netid in dockerrun.sh
+```bash
+./dockerrun.sh
+cd host
+make -j
+```
+Piano:
+```bash
+./main.exe -i inputs/pianoroom.ray --ppm -o output/pianoroom.ppm -H 500 -W 500
+```
+
+To run the final optimized code:
+```bash
+git checkout main
+git pull
+```
+Replace <pjakka3> with your netid in dockerrun.sh
+```bash
+./dockerrun.sh
+cd host
+make -j
+```
+Piano:
+```bash
+./main.exe -i inputs/pianoroom.ray --ppm -o output/pianoroom.ppm -H 500 -W 500
+```
+
+To run the code after the Optimization 1 (Removal of Sorting Logic in shape.cpp)
+```bash
+git checkout optimization1-remove-sorting
+git pull
+```
+Replace <pjakka3> with your netid in dockerrun.sh
+```bash
+./dockerrun.sh
+cd host
+make -j
+```
+Piano:
+```bash
+./main.exe -i inputs/pianoroom.ray --ppm -o output/pianoroom.ppm -H 500 -W 500
+```
+
+To run the code after the Optimization 2 (Removal of Redundant Normalization Calculations in shape.cpp)
+```bash
+git checkout optimization2-redundant-normalization
+git pull
+```
+Replace <pjakka3> with your netid in dockerrun.sh
+```bash
+./dockerrun.sh
+cd host
+make -j
+```
+Piano:
+```bash
+./main.exe -i inputs/pianoroom.ray --ppm -o output/pianoroom.ppm -H 500 -W 500
+```
+
 To compile the program run:
 ```bash
 make -j
