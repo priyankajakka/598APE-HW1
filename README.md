@@ -1,13 +1,39 @@
 # 598APE-HW1
 
-This repository contains code for homework 1 of 598APE.
+This repository contains code for homework 1 of 598APE. 
+We implemented 3 optimizations. Each version of our code, including the original unoptimized program, is on its own branch.  
 
-In particular, this repository is an implementation of a Raytracer.
+| Optimization                                | Branch       |
+|---------------------------------------------|--------------|
+| Original (unoptimized)                      | `baseline`   |
+| Removal of sorting logic                    | `optimization1-remove-sorting`   |
+| Removal of redundant normalization          | `optimization2-redundant-normalization`   |
+| Parallelization of RGB value computation    | `main`    |
 
-To compile the program run:
+To run each of the versions of code, checkout to the branch, pull, make the code, and run the commands!
+
+1. Checkout to branch
 ```bash
+git checkout <branch-name>
+git pull
+```
+2. Replace <pjakka3> with your netid in dockerrun.sh
+```bash
+./dockerrun.sh
+cd host
 make -j
 ```
+3. Run commands for piano, globe, sphere, and elephant!
+
+| Input                                | Command       |
+|---------------------------------------------|--------------|
+| Piano                     | ```./main.exe -i inputs/pianoroom.ray --ppm -o output/pianoroom.ppm -H 500 -W 500```   |
+| Globe                    |  ```./main.exe -i inputs/globe.ray --ppm  -a inputs/globe.animate --movie -F 24  ```   |
+| Sphere mesh          | ```./main.exe -i inputs/elephant.ray --ppm  -a inputs/elephant.animate --movie -F 24 -W 100 -H 100 -o output/sphere.mp4 ```   |
+| Elephant mesh    | ```./main.exe -i inputs/elephant.ray --ppm  -a inputs/elephant.animate --movie -F 24 -W 100 -H 100 -o output/sphere.mp4 ```    |
+
+
+---
 
 To clean existing build artifacts run:
 ```bash
