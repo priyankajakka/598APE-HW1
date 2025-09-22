@@ -10,60 +10,20 @@ We implemented 3 optimizations. Each version of our code, including the original
 | Removal of redundant normalization          | `optimization2-redundant-normalization`   |
 | Parallelization of RGB value computation    | `main`    |
 
-1. Removal 
+To run each of the versions of code, checkout to the branch, pull, make the code, and run the commands!
 
-To run the baseline code (original code without any optimizations):
+1. Checkout to branch
 ```bash
-git checkout baseline
+git checkout <branch-name>
 git pull
 ```
-Replace <pjakka3> with your netid in dockerrun.sh
+2. Replace <pjakka3> with your netid in dockerrun.sh
 ```bash
 ./dockerrun.sh
 cd host
 make -j
 ```
-
-To run the final optimized code:
-```bash
-git checkout main
-git pull
-```
-Replace <pjakka3> with your netid in dockerrun.sh
-```bash
-./dockerrun.sh
-cd host
-make -j
-```
-
-To run the code after the Optimization 1 (Removal of Sorting Logic in shape.cpp)
-```bash
-git checkout optimization1-remove-sorting
-git pull
-```
-Replace <pjakka3> with your netid in dockerrun.sh
-```bash
-./dockerrun.sh
-cd host
-make -j
-```
-
-To run the code after the Optimization 2 (Removal of Redundant Normalization Calculations in shape.cpp)
-```bash
-git checkout optimization2-redundant-normalization
-git pull
-```
-Replace <pjakka3> with your netid in dockerrun.sh
-```bash
-./dockerrun.sh
-cd host
-make -j
-```
-
-To compile the program run:
-```bash
-make -j
-```
+3. Run commands for piano, globe, sphere, and elephant!
 
 To clean existing build artifacts run:
 ```bash
