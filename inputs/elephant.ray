@@ -20,8 +20,8 @@ light
 
 # elephant
 mesh
-data/x.txt 1586 data/f.txt 3168 -1.58 -.43 2.7
-# data/elepx.txt 62779 data/elepf.txt 111748 -1.58 -.43 2.7
+# data/x.txt 1586 data/f.txt 3168 -1.58 -.43 2.7
+data/elepx.txt 62779 data/elepf.txt 111748 -1.58 -.43 2.7
 # wall color
 color
 250 255 150 1 0 0.3
