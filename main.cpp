@@ -13,8 +13,6 @@
 #include<stdlib.h>
 #include <string.h>
 #include <iostream>
-#include <fstream>
-#include <thread>
 using namespace std;
 
 #include <sys/time.h>
@@ -33,9 +31,7 @@ unsigned char* getColor(unsigned char a, unsigned char b, unsigned char c){
 }
      
 int W = 1000, H = 1000;
-size_t bytes_read[2] = {0, 0}; 
 
-// DATA is a 1D array
 unsigned char* DATA = (unsigned char*)malloc(W*H*3*sizeof(unsigned char));
 unsigned char get(int i, int j, int k){
    return DATA[3*(i+j*W)+k]; 
@@ -44,14 +40,11 @@ unsigned char* getPos(int i, int j){
    return &DATA[3*(i+j*W)]; 
 }
 void set(int i, int j, unsigned char r, unsigned char g, unsigned char b){
-   int pos = 3*(i+j*W);
-   DATA[pos] = r; 
-   DATA[pos+1] = g; 
-   DATA[pos+2] = b; 
+   DATA[3*(i+j*W)] = r; 
+   DATA[3*(i+j*W)+1] = g; 
+   DATA[3*(i+j*W)+2] = b; 
 }
 
-// Calculates color at each pixel
-// DATA is RGB array of image W*H
 void refresh(Autonoma* c){
    for(int n = 0; n<H*W; ++n) 
    { 
@@ -209,9 +202,6 @@ Autonoma* createInputs(const char* inputFile) {
    Texture *background = NULL;
 
    FILE *f = NULL;
-   FILE *f2 = NULL;
-
-   // Get camera position and tilt
    if (inputFile) {
       f = fopen(inputFile, "r");
       if (!f) {
@@ -359,7 +349,7 @@ double cosfn(double x, double from, double to) {
    return (to - from) * cos(x * 6.28) + from;
 }
 
-void setFrame(const char* animateFile, Autonoma* MAIN_DATA, int frame, int frameLen, int thread) {
+void setFrame(const char* animateFile, Autonoma* MAIN_DATA, int frame, int frameLen) {
    if (animateFile) {
       char object_type[80];
       char transition_type[80];
@@ -404,10 +394,12 @@ void setFrame(const char* animateFile, Autonoma* MAIN_DATA, int frame, int frame
          } else if (streq(object_type, "object")) {
             ShapeNode* node = MAIN_DATA->listStart;
             for (int i=0; i<obj_num; i++) {
-               if (node == nullptr) {
+               if (node == MAIN_DATA->listEnd) {
                   printf("Could not find object number %d\n", obj_num);
                   exit(1);
                }
+               if (i == obj_num)
+                  break;
                node = node->next;
             }
             Shape* shape = node->data;
@@ -444,7 +436,6 @@ void setFrame(const char* animateFile, Autonoma* MAIN_DATA, int frame, int frame
    refresh(MAIN_DATA);
 }
 
-// MAIN FUNCTION
 int main(int argc, const char** argv){
 
    int frameLen = 1;
@@ -470,7 +461,6 @@ int main(int argc, const char** argv){
          i++;
          continue;
       }
-      // FRAME LEN can change here depending on if its an animated output (24 frames)
       if (streq(argv[i], "-F")) {
          if (i + 1 >= argc) {
             printf("Error -F option must be followed by an integer number of frames");
@@ -546,26 +536,21 @@ int main(int argc, const char** argv){
    
   struct timeval start, end;
    gettimeofday(&start, NULL);
-   if (frameLen == 1) {
-      snprintf(command, sizeof(command), "%s", outFile);
+   for(frame = 0; frame<frameLen; frame++) {
+      setFrame(animateFile, MAIN_DATA, frame, frameLen);      
+      if (frameLen == 1) {
+         snprintf(command, sizeof(command), "%s", outFile);    
+      } else if (png) {
+         snprintf(command, sizeof(command), "%s.tmp.%07d.png", outFile, frame);
+      } else {
+         snprintf(command, sizeof(command), "%s.tmp.%07d.ppm", outFile, frame);
+      }
       if (png) {
          output(command); 
       } else {
          outputPPM(command); 
-      }
-      printf("Done Frame %7d|\n", 0);
-   } else {
-      for(frame = 0; frame<frameLen; frame++) {
-         setFrame(animateFile, MAIN_DATA, frame, frameLen, -1);      
-         if (png) {
-            snprintf(command, sizeof(command), "%s.tmp.%07d.png", outFile, frame);
-            output(command); 
-         } else {
-            snprintf(command, sizeof(command), "%s.tmp.%07d.ppm", outFile, frame);
-            outputPPM(command); 
-         }
-         printf("Done Frame %7d|\n", frame);
-      }
+      }     
+      printf("Done Frame %7d|\n", frame);
    }
 
    gettimeofday(&end, NULL);
