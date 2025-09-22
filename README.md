@@ -17,13 +17,17 @@ To run each of the versions of code, checkout to the branch, pull, make the code
 git checkout <branch-name>
 git pull
 ```
-2. Replace <pjakka3> with your netid in dockerrun.sh
+2. Replace `pjakka3` with your netid in dockerrun.sh
+```bash
+sudo docker run -it --security-opt seccomp=unconfined -v "$(pwd):/host" [NETID]/598ape /bin/bash
+```
+3. Run the following commands to build and the Docker container
 ```bash
 ./dockerrun.sh
 cd host
 make -j
 ```
-3. Run commands for piano, globe, sphere, and elephant!
+4. Run commands for piano, globe, sphere, and elephant!
 
 | Input                                | Command       |
 |---------------------------------------------|--------------|
