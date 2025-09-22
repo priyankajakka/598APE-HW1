@@ -33,6 +33,8 @@ make -j
 | Elephant mesh    | ```./main.exe -i inputs/elephant.ray --ppm  -a inputs/elephant.animate --movie -F 24 -W 100 -H 100 -o output/sphere.mp4 ```    |
 
 
+---
+
 To clean existing build artifacts run:
 ```bash
 make clean
